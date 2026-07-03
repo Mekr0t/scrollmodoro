@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>scrollmodoro — rot responsibly</title>
+<meta name="description" content="Pomodoro for doomscrolling. 25 min of rot → 5 min of grass. The productivity app that gave up. Procrastinate responsibly.">
+<meta name="theme-color" content="#0A0A12">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="scrollmodoro">
+<meta property="og:title" content="scrollmodoro — pomodoro for doomscrolling">
+<meta property="og:description" content="25 min of rot → 5 min of grass. The productivity app that gave up.">
+<meta property="og:url" content="https://scrollmodoro.com">
+<meta property="og:image" content="https://scrollmodoro.com/og.png">
+<meta property="og:image:alt" content="Scrollmodoro social preview image">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="scrollmodoro — pomodoro for doomscrolling">
+<meta name="twitter:description" content="25 min of rot → 5 min of grass. The productivity app that gave up.">
+<meta name="twitter:image" content="https://scrollmodoro.com/og.png">
+
+<link rel="canonical" href="https://scrollmodoro.com/">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   SCROLLMODORO — brainrot-core design tokens
+   pink #FF2D78 | blue #2DE2FF | slime #A6FF00 | grape #B04DFF
+   void #0A0A12 | cope #F7F5F0
+   ============================================================ */
+:root{
+  --pink:#FF2D78; --blue:#2DE2FF; --slime:#A6FF00; --grape:#B04DFF;
+  --void:#0A0A12; --void2:#12121E; --ink:#EDEBFF; --dim:#8B88A6;
+  --cope-bg:#F7F5F0; --cope-ink:#2A2A2A;
+  --display:'Anton', Impact, 'Arial Black', sans-serif;
+  --body:'Space Grotesk', system-ui, sans-serif;
+  --mono:'JetBrains Mono', monospace;
+  --hard-shadow: 6px 6px 0 var(--pink);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--void); color:var(--ink); font-family:var(--body);
+  overflow-x:hidden; min-height:100vh;
+}
+button{font-family:inherit;cursor:pointer}
+::selection{background:var(--pink);color:#fff}
+
+/* ---------- scanline + vignette overlay (the CRT rot filter) ---------- */
+.scanlines{
+  position:fixed; inset:0; pointer-events:none; z-index:90;
+  background:repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px);
+  mix-blend-mode:multiply; opacity:.5;
+}
+.vignette{position:fixed;inset:0;pointer-events:none;z-index:89;
+  background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%);}
+
+/* ---------- glitch wordmark ---------- */
+.wordmark{
+  font-family:var(--display); text-transform:lowercase;
+  font-size:clamp(3rem, 12vw, 8.5rem); line-height:.92; letter-spacing:.01em;
+  position:relative; display:inline-block; color:var(--ink);
+  text-shadow:-3px 0 var(--pink), 3px 0 var(--blue);
+}
+.wordmark::after{
+  content:attr(data-text); position:absolute; inset:0; color:var(--slime);
+  clip-path:inset(45% 0 40% 0); opacity:0;
+  animation:glitchSlice 5s infinite steps(1);
+}
+@keyframes glitchSlice{
+  0%,92%{opacity:0; transform:none}
+  93%{opacity:.9; transform:translateX(-6px); clip-path:inset(20% 0 65% 0)}
+  95%{opacity:.9; transform:translateX(5px); clip-path:inset(60% 0 20% 0)}
+  97%{opacity:0}
+}
+
+/* ---------- layout ---------- */
+.shell{max-width:820px;margin:0 auto;padding:0 20px}
+header.hero{padding:56px 0 20px; text-align:center; position:relative}
+.eyebrow{
+  font-family:var(--mono); font-size:.7rem; letter-spacing:.28em;
+  text-transform:uppercase; color:var(--dim); margin-bottom:16px;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+}
+.eyebrow b{color:var(--pink); font-weight:700}
+.eyebrow::before,.eyebrow::after{content:"";width:22px;height:1px;background:#2A2A3E}
+.tagline{
+  font-family:var(--mono); color:var(--dim); font-size:clamp(.8rem,2.6vw,1rem);
+  margin-top:14px; letter-spacing:.02em;
+}
+.tagline b{color:var(--slime);font-weight:700}
+.tagline i{color:var(--pink);font-style:normal}
+
+/* mascot */
+.mascot{width:120px;height:120px;margin:18px auto 0;display:block;
+  filter:drop-shadow(0 0 18px rgba(255,45,120,.45));
+  animation:bob 3.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
+
+/* guilt-o-meter */
+.guilt{
+  margin:26px auto 0; display:inline-flex; align-items:center; gap:10px;
+  font-family:var(--mono); font-size:.85rem; color:var(--dim);
+  border:1px solid #2A2A3E; border-radius:999px; padding:8px 16px; background:var(--void2);
+}
+.guilt .dot{width:9px;height:9px;border-radius:50%;background:var(--slime);
+  box-shadow:0 0 10px var(--slime); animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.guilt b{color:var(--ink);font-weight:700}
+
+/* ---------- mode picker ---------- */
+.modes{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin:40px 0 12px}
+@media(max-width:560px){.modes{grid-template-columns:1fr}}
+.mode-card{
+  background:var(--void2); border:3px solid var(--ink); border-radius:4px;
+  padding:20px 18px; text-align:left; color:var(--ink);
+  box-shadow:var(--hard-shadow); transition:transform .12s, box-shadow .12s;
+  position:relative; overflow:hidden;
+}
+.mode-card:nth-child(2){--hard-shadow:6px 6px 0 var(--blue);box-shadow:var(--hard-shadow)}
+.mode-card:nth-child(3){--hard-shadow:6px 6px 0 var(--grape);box-shadow:var(--hard-shadow)}
+.mode-card:nth-child(4){--hard-shadow:6px 6px 0 var(--slime);box-shadow:var(--hard-shadow)}
+.mode-card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 currentColor}
+.mode-card:focus-visible{outline:3px solid var(--slime);outline-offset:3px}
+.mode-card:active{transform:translate(3px,3px);box-shadow:2px 2px 0 currentColor}
+.mode-card .m-name{font-family:var(--display);font-size:1.5rem;letter-spacing:.02em}
+.mode-card .m-time{font-family:var(--mono);color:var(--slime);font-size:.85rem;margin-top:4px}
+.mode-card .m-sub{color:var(--dim);font-size:.85rem;margin-top:8px}
+.custom-row{display:none;align-items:center;gap:10px;margin-top:12px}
+.custom-row.open{display:flex}
+.custom-row input{
+  width:80px;background:var(--void);border:2px solid var(--ink);color:var(--ink);
+  font-family:var(--mono);font-size:1rem;padding:8px;border-radius:4px;text-align:center;
+}
+.custom-row .go{background:var(--slime);color:#000;border:2px solid var(--ink);
+  font-weight:700;padding:8px 14px;border-radius:4px}
+
+/* opt-ins */
+.optins{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:18px 0 8px}
+.chip{
+  font-family:var(--mono);font-size:.78rem;background:transparent;color:var(--dim);
+  border:1px dashed #3A3A52;border-radius:999px;padding:7px 14px;
+}
+.chip.on{color:var(--slime);border-color:var(--slime);border-style:solid}
+
+/* ---------- shame stats ---------- */
+.stats-head{display:flex;align-items:center;gap:16px;margin:54px 0 16px;flex-wrap:wrap}
+.section-label{
+  font-family:var(--mono);color:var(--pink);font-size:.75rem;letter-spacing:.25em;
+  text-transform:uppercase;margin:0;display:flex;align-items:center;gap:12px;flex:1;min-width:160px;
+}
+.section-label::after{content:"";flex:1;height:1px;background:#2A2A3E}
+.trophies-label{
+  margin-top:24px;
+  margin-bottom:24px;
+}
+.stats-switch{display:inline-flex;background:var(--void2);border:1px solid #2A2A3E;
+  border-radius:999px;padding:3px;gap:2px;flex-shrink:0}
+.stats-switch-btn{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;
+  background:transparent;border:none;color:var(--dim);padding:7px 16px;border-radius:999px;
+  transition:background .15s,color .15s;
+}
+.stats-switch-btn.active{background:var(--slime);color:#000;font-weight:700}
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:560px){.stats-grid{grid-template-columns:1fr 1fr}}
+.stat{
+  background:var(--void2);border:1px solid #2A2A3E;border-radius:6px;padding:16px;
+}
+.stat .s-val{font-family:var(--display);font-size:clamp(1.6rem,5vw,2.4rem);color:var(--ink)}
+.stat .s-label{font-family:var(--mono);font-size:.72rem;color:var(--dim);margin-top:4px;letter-spacing:.05em}
+.stat.wide{grid-column:1/-1}
+.roast{font-size:1rem;color:var(--ink);line-height:1.45}
+.roast::before{content:"🔥 ";}
+.depletion{margin-top:10px}
+.depletion .bar{height:14px;background:#1C1C2C;border:1px solid #2A2A3E;border-radius:999px;overflow:hidden}
+.depletion .fill{height:100%;width:0%;border-radius:999px;
+  background:linear-gradient(90deg,var(--slime),var(--pink) 70%,var(--grape));
+  transition:width .8s cubic-bezier(.2,.9,.3,1.2)}
+.depletion .cap{display:flex;justify-content:space-between;font-family:var(--mono);
+  font-size:.7rem;color:var(--dim);margin-top:6px}
+
+/* achievements */
+.ach-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:560px){.ach-grid{grid-template-columns:1fr 1fr}}
+.ach{background:var(--void2);border:1px solid #2A2A3E;border-radius:6px;padding:14px;
+  display:flex;gap:10px;align-items:flex-start;opacity:.32;filter:grayscale(1)}
+.ach.unlocked{opacity:1;filter:none;border-color:var(--slime)}
+.ach .a-emoji{font-size:1.5rem}
+.ach .a-name{font-weight:700;font-size:.85rem}
+.ach .a-desc{font-size:.72rem;color:var(--dim);margin-top:2px}
+
+footer{padding:60px 0 40px;text-align:center;font-family:var(--mono);
+  font-size:.72rem;color:var(--dim)}
+footer b{color:var(--pink)}
+.share-cta{margin-top:14px;font-size:.78rem;color:var(--dim)}
+.share-cta .tag{color:var(--slime);font-weight:700}
+
+/* ============================================================
+   SCROLL MODE — full takeover with infinite slop feed
+   ============================================================ */
+.takeover{position:fixed;inset:0;z-index:50;display:none;flex-direction:column;
+  align-items:center;justify-content:center;background:var(--void)}
+.takeover.active{display:flex}
+
+.feed{position:absolute;inset:-5%;display:flex;gap:14px;justify-content:center;
+  opacity:.38;filter:blur(1px) saturate(1.4)}
+.feed-col{display:flex;flex-direction:column;gap:14px;width:min(300px,42vw)}
+.feed-col .track{display:flex;flex-direction:column;gap:14px;
+  animation:feedScroll var(--speed,40s) linear infinite}
+.feed-col.reverse .track{animation-direction:reverse}
+@keyframes feedScroll{to{transform:translateY(-50%)}}
+.slop{
+  background:var(--void2);border:1px solid #2A2A3E;border-radius:12px;overflow:hidden;flex-shrink:0;
+}
+.slop .thumb{height:150px;display:flex;align-items:center;justify-content:center;
+  font-size:3.2rem}
+.slop .meta{padding:10px 12px}
+.slop .cap{font-size:.78rem;line-height:1.3}
+.slop .who{font-family:var(--mono);font-size:.66rem;color:var(--dim);margin-top:6px;
+  display:flex;justify-content:space-between}
+.slop .pbar{height:3px;background:#2A2A3E}
+.slop .pbar i{display:block;height:100%;background:var(--pink)}
+
+.hud{position:relative;z-index:2;text-align:center;padding:20px;
+  background:radial-gradient(ellipse at center, rgba(10,10,18,.82) 0%, rgba(10,10,18,.25) 65%, transparent 100%)}
+.hud .phase-tag{font-family:var(--mono);font-size:.8rem;letter-spacing:.3em;
+  text-transform:uppercase;color:var(--pink)}
+.big-timer{
+  font-family:var(--display);font-size:clamp(5.5rem,26vw,15rem);line-height:1;
+  text-shadow:-4px 0 var(--pink), 4px 0 var(--blue);
+  animation:hueShift 12s linear infinite;
+}
+@keyframes hueShift{0%{filter:hue-rotate(0)}100%{filter:hue-rotate(360deg)}}
+.integrity{width:min(420px,78vw);margin:14px auto 0}
+.integrity .bar{height:10px;background:rgba(255,255,255,.08);border:1px solid #3A3A52;
+  border-radius:999px;overflow:hidden}
+.integrity .fill{height:100%;width:100%;background:linear-gradient(90deg,var(--pink),var(--grape));
+  border-radius:999px;transition:width 1s linear}
+.integrity .cap{font-family:var(--mono);font-size:.7rem;color:var(--dim);margin-top:6px}
+.hud .quit{
+  margin-top:26px;
+  background:rgba(10,10,18,.72);
+  color:var(--ink);
+  border:1px solid rgba(237,235,255,.28);
+  border-radius:999px;
+  padding:12px 20px;
+  font-family:var(--mono);
+  font-size:.9rem;
+  backdrop-filter:blur(10px);
+}
+.hud .quit:hover{color:var(--ink);border-color:var(--ink)}
+
+/* ============================================================
+   COPE MODE — the hard cut to white
+   ============================================================ */
+.cope{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;
+  align-items:center;justify-content:center;background:var(--cope-bg);color:var(--cope-ink);
+  text-align:center;padding:24px}
+.cope.active{display:flex}
+.cope .breath{width:130px;height:130px;border-radius:50%;
+  border:2px solid var(--cope-ink);opacity:.5;margin-bottom:36px;
+  animation:breathe 8s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+.cope .c-timer{font-family:var(--display);font-size:clamp(3rem,14vw,6rem);letter-spacing:.02em}
+.cope .c-tip{font-family:var(--body);font-size:clamp(1.05rem,4vw,1.4rem);margin-top:18px;
+  min-height:2em;transition:opacity .5s}
+.cope .c-sub{font-family:var(--mono);font-size:.75rem;color:#8A8A82;margin-top:10px;letter-spacing:.15em;text-transform:uppercase}
+.cope .c-controls{margin-top:36px;display:flex;gap:12px}
+.cope .c-btn{background:transparent;border:1px solid var(--cope-ink);color:var(--cope-ink);
+  border-radius:999px;padding:10px 20px;font-family:var(--mono);font-size:.78rem}
+
+/* ============================================================
+   DONE — rot report
+   ============================================================ */
+.done{position:fixed;inset:0;z-index:70;display:none;overflow-y:auto;background:var(--void)}
+.done.active{display:block}
+.done-inner{max-width:560px;margin:0 auto;padding:56px 20px 80px;text-align:center}
+.done h2{font-family:var(--display);font-size:clamp(2.2rem,9vw,3.6rem);
+  text-shadow:-3px 0 var(--pink),3px 0 var(--blue)}
+.done .d-sub{font-family:var(--mono);color:var(--dim);margin-top:10px;font-size:.85rem}
+.report-canvas{width:100%;max-width:420px;border:3px solid var(--ink);border-radius:6px;
+  box-shadow:8px 8px 0 var(--grape);margin:30px auto 0;display:block}
+.done .d-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:28px}
+.btn-big{font-family:var(--display);font-size:1.05rem;letter-spacing:.04em;
+  border:3px solid var(--ink);border-radius:4px;padding:14px 24px;color:#000}
+.btn-share{background:var(--slime);box-shadow:5px 5px 0 var(--pink)}
+.btn-again{background:var(--blue);box-shadow:5px 5px 0 var(--slime)}
+.btn-home{background:transparent;color:var(--ink);box-shadow:5px 5px 0 #3A3A52}
+.btn-big:hover{transform:translate(-2px,-2px)}
+.btn-big:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000}
+
+/* toast */
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:calc(72px + env(safe-area-inset-bottom, 0px));
+  transform:translateX(-50%) translateY(12px);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  background:var(--void2);
+  border:2px solid var(--slime);
+  color:var(--ink);
+  border-radius:6px;
+  padding:12px 18px;
+  font-family:var(--mono);
+  font-size:.8rem;
+  z-index:99;
+  transition:transform .3s cubic-bezier(.2,.9,.3,1.3), opacity .25s ease, visibility 0s linear .25s;
+  max-width:min(90vw, 520px);
+  text-align:center;
+}
+
+.toast.show{
+  transform:translateX(-50%) translateY(0);
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transition:transform .3s cubic-bezier(.2,.9,.3,1.3), opacity .25s ease;
+}
+
+/* ---------- SETTINGS (cogwheel + popup) ---------- */
+.settings-btn{
+  position:fixed; top:calc(16px + env(safe-area-inset-top, 0px)); right:calc(16px + env(safe-area-inset-right, 0px));
+  z-index:110; width:44px; height:44px; border-radius:50%;
+  background:var(--void2); border:2px solid var(--ink); color:var(--ink);
+  font-size:1.25rem; line-height:1; display:flex; align-items:center; justify-content:center;
+  box-shadow:3px 3px 0 var(--pink); transition:transform .12s, box-shadow .12s;
+}
+.settings-btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--pink)}
+.settings-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--pink)}
+.settings-btn:focus-visible{outline:3px solid var(--slime);outline-offset:2px}
+
+.settings-overlay{
+  position:fixed; inset:0; z-index:120; display:none;
+  align-items:flex-start; justify-content:flex-end;
+  background:rgba(0,0,0,.55); padding:calc(70px + env(safe-area-inset-top, 0px)) 16px 16px;
+}
+.settings-overlay.open{display:flex}
+.settings-panel{
+  background:var(--void2); border:3px solid var(--ink); border-radius:8px;
+  box-shadow:var(--hard-shadow); width:min(320px,90vw); padding:22px; color:var(--ink);
+}
+.settings-panel h3{font-family:var(--display);font-size:1.4rem;letter-spacing:.02em;margin-bottom:12px}
+.settings-panel p{font-family:var(--mono);font-size:.8rem;color:var(--dim);line-height:1.55}
+.settings-row{
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+  font-family:var(--mono); font-size:.8rem; padding:12px 0; border-bottom:1px solid #2A2A3E;
+}
+.switch{position:relative; width:44px; height:24px; flex-shrink:0; display:inline-block}
+.switch input{position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer}
+.switch .track{
+  position:absolute; inset:0; background:#2A2A3E; border-radius:999px; transition:background .15s;
+}
+.switch .track::before{
+  content:""; position:absolute; left:3px; top:3px; width:18px; height:18px;
+  border-radius:50%; background:var(--ink); transition:transform .15s;
+}
+.switch input:checked ~ .track{background:var(--slime)}
+.switch input:checked ~ .track::before{transform:translateX(20px);background:#000}
+.switch input:focus-visible ~ .track{outline:3px solid var(--slime);outline-offset:2px}
+.settings-close{
+  margin-top:18px; background:var(--slime); color:#000; border:2px solid var(--ink);
+  font-weight:700; padding:9px 16px; border-radius:4px; width:100%;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .wordmark::after,.mascot,.big-timer,.feed-col .track,.cope .breath{animation:none !important}
+}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<button class="settings-btn" id="settingsBtn" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false">⚙️</button>
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <h3 id="settingsTitle">⚙️ settings</h3>
+    <div class="settings-row">
+      <span>freedom units</span>
+      <label class="switch">
+        <input type="checkbox" id="imperialToggle" aria-label="Toggle imperial units">
+        <span class="track" aria-hidden="true"></span>
+      </label>
+    </div>
+    <div class="settings-row">
+      <span>work timer</span>
+      <label class="switch">
+        <input type="checkbox" id="workTimerToggle" aria-label="Toggle work timer">
+        <span class="track" aria-hidden="true"></span>
+      </label>
+    </div>
+    <p>more settings not coming.</p>
+    <button class="settings-close" id="settingsClose">close</button>
+  </div>
+</div>
+
+<!-- ================= HOME ================= -->
+<main id="home">
+  <div class="shell">
+    <header class="hero">
+      <p class="eyebrow">pomodoro for <b>doomscrolling</b></p>
+      <h1 class="wordmark" data-text="scrollmodoro">scrollmodoro</h1>
+      <p class="tagline">the pomodoro timer, but backwards. <b>25 min of rot</b> → <i>5 min of grass</i>.<br>procrastinate responsibly.</p>
+
+      <!-- mascot: Rotty, the glazed-over brain -->
+      <svg class="mascot" viewBox="0 0 120 120" aria-label="Rotty, a brain-rotted mascot holding a phone">
+        <ellipse cx="60" cy="62" rx="40" ry="34" fill="#FFB3CE" stroke="#0A0A12" stroke-width="3"/>
+        <path d="M32 50 Q40 38 52 44 Q58 32 70 40 Q82 34 88 48 Q96 56 88 66" fill="none" stroke="#0A0A12" stroke-width="3" stroke-linecap="round"/>
+        <path d="M38 70 Q46 78 56 72 M62 76 Q72 82 82 72" fill="none" stroke="#0A0A12" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="47" cy="58" r="7" fill="#fff" stroke="#0A0A12" stroke-width="2.5"/>
+        <circle cx="73" cy="58" r="7" fill="#fff" stroke="#0A0A12" stroke-width="2.5"/>
+        <circle cx="49" cy="60" r="2.6" fill="#0A0A12"/>
+        <circle cx="75" cy="60" r="2.6" fill="#0A0A12"/>
+        <ellipse cx="45" cy="55" rx="1.6" ry="1.2" fill="#fff" opacity=".9"/>
+        <ellipse cx="71" cy="55" rx="1.6" ry="1.2" fill="#fff" opacity=".9"/>
+        <path d="M54 74 Q60 70 66 74" fill="none" stroke="#0A0A12" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M66 76 q3 7 -1 10" fill="none" stroke="#2DE2FF" stroke-width="3" stroke-linecap="round"/>
+        <rect x="84" y="70" width="16" height="26" rx="3" fill="#0A0A12" transform="rotate(14 92 83)"/>
+        <rect x="87" y="74" width="10" height="16" rx="1.5" fill="#2DE2FF" transform="rotate(14 92 83)" opacity=".85"/>
+      </svg>
+
+      <div class="guilt" id="guilt">
+        <span class="dot"></span>
+        <span><b id="guiltCount">1,247</b> users allegedly rotting worldwide right now</span>
+      </div>
+    </header>
+
+    <!-- mode picker -->
+    <section class="modes" id="modePicker" aria-label="Pick your rot mode">
+      <button class="mode-card" data-mode="tiktok">
+        <div class="m-name">TikTok Mode</div>
+        <div class="m-time">15:00 rot → 05:00 cope</div>
+        <div class="m-sub">short attention span special</div>
+      </button>
+      <button class="mode-card" data-mode="reels">
+        <div class="m-name">Reels Mode</div>
+        <div class="m-time">25:00 rot → 05:00 cope</div>
+        <div class="m-sub">the classic scrollmodoro</div>
+      </button>
+      <button class="mode-card" data-mode="brainrot">
+        <div class="m-name">Full Brainrot</div>
+        <div class="m-time">60:00 rot → 10:00 cope</div>
+        <div class="m-sub">are you ok?</div>
+      </button>
+      <button class="mode-card" data-mode="custom" id="customCard">
+        <div class="m-name">Custom</div>
+        <div class="m-time">?? : ??</div>
+        <div class="m-sub">for the truly lost souls</div>
+        <div class="custom-row" id="customRow">
+          <input type="number" id="customMin" min="1" max="480" value="45" aria-label="custom minutes"> <span style="font-family:var(--mono);font-size:.8rem;color:var(--dim)">min</span>
+          <span class="go" id="customGo" role="button" tabindex="0">rot</span>
+        </div>
+      </button>
+    </section>
+
+    <div class="optins">
+      <button class="chip" id="notifChip">🔔 dark humor notifications: off</button>
+      <button class="chip" id="soundChip">🔊 sound: on</button>
+    </div>
+
+    <!-- shame stats -->
+    <div class="stats-head">
+      <h2 class="section-label">shame stats dashboard</h2>
+      <div class="stats-switch" id="statsSwitch" role="tablist" aria-label="stats timeframe">
+        <button class="stats-switch-btn active" data-view="today" role="tab" aria-selected="true">today</button>
+        <button class="stats-switch-btn" data-view="lifetime" role="tab" aria-selected="false">lifetime</button>
+      </div>
+    </div>
+    <section class="stats-grid" id="statsGrid">
+      <div class="stat"><div class="s-val" id="stTime">0m</div><div class="s-label" id="stTimeLabel">rotted today</div></div>
+      <div class="stat"><div class="s-val" id="stSessions">0</div><div class="s-label" id="stSessionsLabel">sessions today</div></div>
+      <div class="stat"><div class="s-val" id="stStreak">0🔥</div><div class="s-label" id="stStreakLabel">day rot streak</div></div>
+      <div class="stat"><div class="s-val" id="stTier">🌱</div><div class="s-label" id="stTierName">casual scroller</div></div>
+      <div class="stat wide"><div class="roast" id="stRoast">your brain is still intact. suspicious.</div></div>
+      <div class="stat wide">
+        <div class="s-label" style="margin-top:0">brain cell depletion</div>
+        <div class="depletion">
+          <div class="bar"><div class="fill" id="depletionFill"></div></div>
+          <div class="cap"><span>fully sentient</span><span id="depletionPct">0%</span><span>terminal</span></div>
+        </div>
+      </div>
+      <div class="stat wide"><div class="s-val" style="font-size:1.3rem" id="stDistance">0 m scrolled</div><div class="s-label" id="stDistanceCmp">that's basically nothing. rookie.</div></div>
+    </section>
+
+    <!-- achievements -->
+    <h2 class="section-label trophies-label">trophies of shame</h2>
+    <section class="ach-grid" id="achGrid"></section>
+
+    <footer>
+      scrollmodoro © 2026 · a productivity app that <b>gave up</b> · no data leaves your device (it's ashamed too)
+      <div class="share-cta">made to be screenshotted — post your rot report and tag it <span class="tag">#scrollmodoro</span></div>
+    </footer>
+  </div>
+</main>
+
+<!-- ================= SCROLL MODE ================= -->
+<div class="takeover" id="scrollScreen" aria-label="Scroll session in progress">
+  <div class="feed" id="feed" aria-hidden="true"></div>
+  <div class="hud">
+    <div class="phase-tag" id="phaseTag">◉ rot in progress</div>
+    <div class="big-timer" id="bigTimer">25:00</div>
+    <div class="integrity">
+      <div class="bar"><div class="fill" id="integrityFill"></div></div>
+      <div class="cap">brain cell integrity: <span id="integrityPct">100%</span></div>
+    </div>
+    <button class="quit" id="quitBtn">i give up (end rot early)</button>
+  </div>
+</div>
+
+<!-- ================= COPE MODE ================= -->
+<div class="cope" id="copeScreen" aria-label="Detox break">
+  <div class="breath" aria-hidden="true"></div>
+  <div class="c-timer" id="copeTimer">05:00</div>
+  <div class="c-tip" id="copeTip">look out a window. touch grass. you did it.</div>
+  <div class="c-sub">cope mode · the algorithm has released you</div>
+  <div class="c-controls">
+    <button class="c-btn" id="lofiBtn">lo-fi: off</button>
+    <button class="c-btn" id="skipCope">skip (coward)</button>
+  </div>
+</div>
+
+<!-- ================= DONE / ROT REPORT ================= -->
+<div class="done" id="doneScreen">
+  <div class="done-inner">
+    <h2 id="doneTitle">session complete</h2>
+    <p class="d-sub" id="doneSub">you may now return to productivity. or don't.</p>
+    <canvas class="report-canvas" id="reportCanvas" width="1080" height="1350"></canvas>
+    <div class="d-actions">
+      <button class="btn-big btn-share" id="shareBtn">share rot report</button>
+      <button class="btn-big btn-again" id="againBtn">rot again</button>
+      <button class="btn-big btn-home" id="homeBtn">back to reality</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+/* ============================================================
+   SCROLLMODORO ENGINE
+   Extensible by design: add new procrastination modes to MODES,
+   new roasts/tips/achievements to their registries below.
+   ============================================================ */
+
+/* ---------- MODE REGISTRY (add "infinite text scroll" etc. here) ---------- */
+const MODES = {
+  tiktok:   { name:'TikTok Mode',   rotMin:15, copeMin:5,  sub:'short attention span special' },
+  reels:    { name:'Reels Mode',    rotMin:25, copeMin:5,  sub:'the classic scrollmodoro' },
+  brainrot: { name:'Full Brainrot', rotMin:60, copeMin:10, sub:'are you ok?' },
+  custom:   { name:'Custom Rot',    rotMin:45, copeMin:5,  sub:'for the truly lost souls' },
+};
+
+const ROT_TIERS = [
+  { min:0,     emoji:'🌱', name:'Casual Scroller' },
+  { min:5,     emoji:'👀', name:'Curious Lurker' },
+  { min:15,    emoji:'👺', name:'Certified 67' },
+  { min:30,    emoji:'📱', name:'Screen Gremlin' },
+  { min:45,    emoji:'💻', name:'Chronically Online' },
+  { min:90,    emoji:'💀', name:'Terminal Brainrot' },
+  { min:180,   emoji:'🧟', name:'Reanimated' },
+  { min:360,   emoji:'🕳️', name:'Void Gazer' },
+  { min:720,   emoji:'📡', name:'One With the Algorithm' },
+  { min:1440,  emoji:'☢️', name:'Beyond Redemption' },
+  { min:4320,  emoji:'👑', name:'Rot Royalty' },
+  { min:10080, emoji:'🛸', name:'Left the Simulation' },
+];
+
+const NOTIF_LINES = [
+  "Time's up. Your neurons miss you.",
+  "The TikTok algorithm has released you.",
+  "You've been freed. For now.",
+  "Session complete. Your thumbs can rest.",
+  "Your scrolling session is complete. You may now return to productivity.",
+  "Rot concluded. Please reboot your personality.",
+];
+
+const COPE_TIPS = [
+  "look out a window. touch grass. you did it.",
+  "blink. your eyes are dry and you know it.",
+  "drink some water, 67.",
+  "unclench your jaw. yes, right now.",
+  "stare at something 20 feet away. anything.",
+  "roll your shoulders. they live near your ears now.",
+  "think one (1) original thought.",
+  "you're doing great. by extremely low standards.",
+];
+
+const ROASTS = [
+  m => `That's ${Math.max(1, Math.round(m/18))} TED talk${m>=36?'s':''} you didn't watch.`,
+  m => `You could've microwaved ${Math.max(1, Math.round(m/2))} burritos in that time.`,
+  m => `That's ${Math.max(1, Math.round(m/3.5))} songs you heard 4 seconds of.`,
+  m => `Roughly ${Math.max(1, Math.round(m/10))} chapters of a book. Hypothetically.`,
+  m => `Enough time to text back ${Math.max(1, Math.round(m/1.5))} people. You texted zero.`,
+  m => { const n=Math.max(1,Math.round(m/25)); return `That's ${n} actual Pomodoro${n===1?'':'s'} you ran in reverse.`; },
+  m => { const n=Math.max(1,Math.round(m/4));  return `${n} Duolingo lesson${n===1?'':'s'} skipped. the owl knows where you live.`; },
+  m => { const n=Math.max(1,Math.round(m/20)); return `Enough time for ${n} power nap${n===1?'':'s'}. you chose this instead.`; },
+  m => { const n=Math.max(1,Math.round(m/5));  return `You could've learned ${n} guitar chord${n===1?'':'s'}. you learned the algorithm instead.`; },
+  m => { const n=Math.max(1,Math.round(m/8));  return `${n} glass${n===1?'':'es'} of water you didn't drink. blink — you're dehydrated.`; },
+  m => { const n=Math.max(1,Math.round(m/15)); return `${n} job application${n===1?'':'s'} you didn't submit. the economy noticed.`; },
+  m => { const n=Math.max(1,Math.round(m/45)); return `${n} load${n===1?'':'s'} of laundry, still sitting there, judging you.`; },
+  m => { const n=Math.max(1,Math.round(m/12)); return `${n} pot${n===1?'':'s'} of pasta, uncooked and disappointed.`; },
+  m => `Roughly ${(m*72).toLocaleString()} heartbeats, not one of them productive.`,
+  m => `You blinked about ${(m*12).toLocaleString()} times and retained none of it.`,
+  m => `You could've done ${(m*8).toLocaleString()} push-ups. your thumb is now your strongest muscle.`,
+  m => `An estimated ${(m*35).toLocaleString()} blades of grass went untouched.`,
+];
+
+const ACHIEVEMENTS = [
+  { id:'first_rot',  emoji:'🍼', name:"Baby's First Rot",       desc:'complete any session' },
+  { id:'took_break', emoji:'🏆', name:'Grass Toucher',           desc:'actually finish a cope break' },
+  { id:'streak_3',   emoji:'🔥', name:'3-Day Rot Streak',        desc:'rot 3 days in a row' },
+  { id:'streak_7',   emoji:'🥇', name:'7-Day Rot Streak',        desc:'a full week of dedication' },
+  { id:'brainrot_1', emoji:'🧟', name:'Survivor',                desc:'finish Full Brainrot mode' },
+  { id:'brainrot_5', emoji:'💀', name:'Beyond Saving',           desc:'Full Brainrot ×5 lifetime' },
+  { id:'night_owl',  emoji:'🦉', name:'The 3AM Zone',            desc:'rot between 2–5 am' },
+  { id:'lost_soul',  emoji:'🕯️', name:'Truly Lost Soul',         desc:'use custom mode' },
+  { id:'marathon',   emoji:'📵', name:'Touch Grass Immediately', desc:'100+ min rotted in one day' },
+  { id:'cold_feet',  emoji:'🥶', name:'Cold Feet',                desc:'quit a session immediately' },
+  { id:'skip_cope',  emoji:'🤧', name:'Allergic to Grass',        desc:'skip the cope break entirely' },
+  { id:'void_24h',   emoji:'🕳️', name:'The Void Stares Back',      desc:'24 hours rotted, all-time' },
+];
+
+/* fake feed content */
+const SLOP_USERS = ['@sigma_grindset','@rat.saw.god','@npc_energy','@unemployed.wizard','@certified_yapper','@brainrot.bob','@ohio_final_boss','@goblin.mode.irl','@lore.accurate.me','@mewing_gone_wrong'];
+const SLOP_CAPS = ['POV: you said "one more video" 3 hours ago','this changed my brain chemistry','no thoughts head empty','the algorithm knows me too well','day 47 of not touching grass','me explaining the lore to no one','why is this so real','not me watching this at 3am','caught in 4k rotting','this is your sign to keep scrolling','literally me fr fr','new personality just dropped','unhinged behavior only','the way i RAN here'];
+const SLOP_EMOJI = ['💀','😭','🔥','🧠','✨','🐀','🦝','🥶','😩','🫠','👺','🗿','🦍','🍜','🌮','🐸'];
+const SLOP_GRADS = [['#FF2D78','#B04DFF'],['#2DE2FF','#A6FF00'],['#B04DFF','#2DE2FF'],['#FF2D78','#FF8A00'],['#A6FF00','#FF2D78'],['#2DE2FF','#B04DFF']];
+
+/* ---------- STORAGE ADAPTER ----------
+   Persists to localStorage on the open web (scrollmodoro.com).
+   window.storage is used instead when present (Claude artifact preview).
+   In-memory mem{} is the last-resort fallback if storage is unavailable
+   entirely (e.g. disabled storage in a sandboxed/private context). */
+const mem = {};
+const store = {
+  async get(k){
+    if(window.storage){
+      try{ const r = await window.storage.get(k); return r ? r.value : null; }catch(e){}
+    }
+    try{ return localStorage.getItem(k); }
+    catch(e){ return (k in mem) ? mem[k] : null; }
+  },
+  async set(k,v){
+    mem[k]=v;
+    if(window.storage){
+      try{ await window.storage.set(k,v); return; }catch(e){}
+    }
+    try{ localStorage.setItem(k,v); }catch(e){/* in-memory fallback only */}
+  }
+};
+
+const DATA_KEY = 'scrollmodoro-data';
+let data = {
+  daySeconds:{}, daySessions:{},
+  brainrotCount:0, breakCount:0,
+  streak:{current:0,best:0,lastDate:null},
+  achievements:{},
+  prefs:{ notif:false, sound:true, statsView:'today', imperial:false }
+};
+async function loadData(){
+  const raw = await store.get(DATA_KEY);
+  if(raw){ try{ data = Object.assign(data, JSON.parse(raw)); }catch(e){} }
+}
+async function saveData(){ await store.set(DATA_KEY, JSON.stringify(data)); }
+
+const todayKey = () => new Date().toISOString().slice(0,10);
+const $ = id => document.getElementById(id);
+
+/* ---------- STATE ---------- */
+let state = { phase:'idle', modeKey:null, endTime:0, rotSec:0, elapsedRot:0, timerId:null };
+
+/* ---------- AUDIO (Web Audio, no assets) ---------- */
+let audioCtx=null, lofiNodes=null, lofiOn=false;
+function ctx(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function ding(){
+  if(!data.prefs.sound) return;
+  try{
+    const c=ctx(), t=c.currentTime;
+    [880,1174.66].forEach((f,i)=>{
+      const o=c.createOscillator(), g=c.createGain();
+      o.type='sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001,t+i*0.12);
+      g.gain.exponentialRampToValueAtTime(0.28,t+i*0.12+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+i*0.12+1.4);
+      o.connect(g).connect(c.destination); o.start(t+i*0.12); o.stop(t+i*0.12+1.5);
+    });
+  }catch(e){}
+}
+function lofiStart(){
+  if(lofiNodes) return;
+  try{
+    const c=ctx(), t=c.currentTime;
+    const master=c.createGain(); master.gain.value=0; master.connect(c.destination);
+    master.gain.linearRampToValueAtTime(0.06,t+2);
+    const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=520; lp.connect(master);
+    const oscs=[110,164.8,220.5].map(f=>{
+      const o=c.createOscillator(); o.type='triangle'; o.frequency.value=f;
+      o.detune.value=(Math.random()*8)-4; o.connect(lp); o.start(); return o;
+    });
+    const lfo=c.createOscillator(), lg=c.createGain();
+    lfo.frequency.value=0.08; lg.gain.value=0.02;
+    lfo.connect(lg).connect(master.gain); lfo.start();
+    lofiNodes={master,oscs,lfo};
+  }catch(e){}
+}
+function lofiStop(){
+  if(!lofiNodes) return;
+  try{
+    const c=ctx(), t=c.currentTime;
+    lofiNodes.master.gain.linearRampToValueAtTime(0.0001,t+1);
+    const n=lofiNodes; lofiNodes=null;
+    setTimeout(()=>{ n.oscs.forEach(o=>o.stop()); n.lfo.stop(); },1200);
+  }catch(e){ lofiNodes=null; }
+}
+
+/* ---------- NOTIFICATIONS ---------- */
+function notify(body){
+  if(!data.prefs.notif) return;
+  try{
+    if(Notification.permission==='granted')
+      new Notification('scrollmodoro', { body });
+  }catch(e){}
+}
+
+/* ---------- TOAST ---------- */
+let toastT=null;
+function toast(msg){
+  const el=$('toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),3200);
+}
+
+/* ---------- FEED BUILDER ---------- */
+function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
+function fakeViews(){ const n=(Math.random()*14+0.2); return n>1? n.toFixed(1)+'M' : Math.round(n*900)+'K'; }
+function slopCard(){
+  const g=rnd(SLOP_GRADS);
+  return `<div class="slop">
+    <div class="thumb" style="background:linear-gradient(135deg,${g[0]},${g[1]})">${rnd(SLOP_EMOJI)}${rnd(SLOP_EMOJI)}</div>
+    <div class="meta"><div class="cap">${rnd(SLOP_CAPS)}</div>
+    <div class="who"><span>${rnd(SLOP_USERS)}</span><span>▶ ${fakeViews()}</span></div></div>
+    <div class="pbar"><i style="width:${Math.round(Math.random()*90+5)}%"></i></div>
+  </div>`;
+}
+function buildFeed(){
+  const feed=$('feed'); feed.innerHTML='';
+  const cols = window.innerWidth<640 ? 2 : 3;
+  for(let cIdx=0;cIdx<cols;cIdx++){
+    const col=document.createElement('div');
+    col.className='feed-col'+(cIdx%2?' reverse':'');
+    const track=document.createElement('div'); track.className='track';
+    track.style.setProperty('--speed',(34+cIdx*9)+'s');
+    let cards=''; for(let i=0;i<9;i++) cards+=slopCard();
+    track.innerHTML=cards+cards; /* duplicate for seamless loop */
+    col.appendChild(track); feed.appendChild(col);
+  }
+}
+
+/* ---------- TIMER CORE (wall-clock based, survives tab switching) ---------- */
+const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+
+function startRot(modeKey, customMin){
+  const m=MODES[modeKey];
+  const rotMin = modeKey==='custom' ? (customMin||m.rotMin) : m.rotMin;
+  if(modeKey==='custom') MODES.custom.rotMin=rotMin;
+  state={ phase:'scroll', modeKey, rotSec:rotMin*60, elapsedRot:0,
+          endTime: Date.now()+rotMin*60*1000, timerId:null };
+  buildFeed();
+  $('scrollScreen').classList.add('active');
+  document.body.style.overflow='hidden';
+  try{ ctx(); }catch(e){} /* unlock audio on user gesture (may be suspended on auto-start) */
+  const hr=new Date().getHours();
+  if(hr>=2&&hr<5) unlock('night_owl');
+  if(modeKey==='custom') unlock('lost_soul');
+  tickLoop();
+  toast(`${m.name} engaged. rot well.`);
+}
+
+function startCope(){
+  const m=MODES[state.modeKey];
+  state.phase='cope';
+  state.endTime=Date.now()+m.copeMin*60*1000;
+  $('scrollScreen').classList.remove('active');
+  $('copeScreen').classList.add('active');
+  rotateTip();
+  tickLoop();
+  toast('Cope Mode engaged. go touch some grass.');
+}
+
+function tickLoop(){
+  clearInterval(state.timerId);
+  state.timerId=setInterval(()=>{
+    const left=Math.max(0,Math.round((state.endTime-Date.now())/1000));
+    if(state.phase==='scroll'){
+      state.elapsedRot=state.rotSec-left;
+      $('bigTimer').textContent=fmt(left);
+      const pct=Math.round(left/state.rotSec*100);
+      $('integrityFill').style.width=pct+'%';
+      $('integrityPct').textContent=pct+'%';
+      document.title=`${fmt(left)} 🧠 rotting…`;
+      if(left<=0){ ding(); notify(rnd(NOTIF_LINES)); finishRot(); }
+    }else if(state.phase==='cope'){
+      $('copeTimer').textContent=fmt(left);
+      document.title=`${fmt(left)} 🌱 coping…`;
+      if(left<=0){ ding(); notify('Break complete. Rot privileges restored.'); finishCope(true); }
+    }
+  },250);
+}
+
+async function finishRot(){
+  clearInterval(state.timerId);
+  const tk=todayKey(), sec=state.elapsedRot;
+  const DAY_SECONDS_CAP=24*60*60;
+  data.daySeconds[tk]=Math.min((data.daySeconds[tk]||0)+sec, DAY_SECONDS_CAP);
+  data.daySessions[tk]=(data.daySessions[tk]||0)+1;
+  if(state.modeKey==='brainrot' && sec>=MODES.brainrot.rotMin*60-2){
+    data.brainrotCount++;
+    unlock('brainrot_1');
+    if(data.brainrotCount>=5) unlock('brainrot_5');
+  }
+  /* streak */
+  const y=new Date(Date.now()-864e5).toISOString().slice(0,10);
+  const s=data.streak;
+  if(s.lastDate!==tk){
+    s.current = (s.lastDate===y) ? s.current+1 : 1;
+    s.lastDate=tk; s.best=Math.max(s.best,s.current);
+  }
+  unlock('first_rot');
+  if(s.current>=3) unlock('streak_3');
+  if(s.current>=7) unlock('streak_7');
+  if((data.daySeconds[tk]/60)>=100) unlock('marathon');
+  if(Object.values(data.daySeconds).reduce((a,b)=>a+b,0)/60 >= 1440) unlock('void_24h');
+  await saveData();
+  startCope();
+}
+
+async function finishCope(completed){
+  clearInterval(state.timerId);
+  lofiStop(); lofiOn=false; $('lofiBtn').textContent='lo-fi: off';
+  if(completed){ data.breakCount++; unlock('took_break'); await saveData(); }
+  else { unlock('skip_cope'); await saveData(); }
+  $('copeScreen').classList.remove('active');
+  showDone(completed);
+}
+
+function quitRot(){
+  /* early quit still logs the partial rot — the shame is permanent */
+  state.elapsedRot=state.rotSec-Math.max(0,Math.round((state.endTime-Date.now())/1000));
+  if(state.elapsedRot<60) unlock('cold_feet');
+  toast('quitter detected. partial rot logged anyway.');
+  finishRot();
+}
+
+let tipT=null;
+function rotateTip(){
+  clearInterval(tipT); let i=0;
+  const el=$('copeTip'); el.textContent=COPE_TIPS[0];
+  tipT=setInterval(()=>{
+    el.style.opacity=0;
+    setTimeout(()=>{ i=(i+1)%COPE_TIPS.length; el.textContent=COPE_TIPS[i]; el.style.opacity=1; },500);
+  },9000);
+}
+
+/* ---------- ACHIEVEMENTS ---------- */
+function unlock(id){
+  if(data.achievements[id]) return;
+  data.achievements[id]=Date.now();
+  const a=ACHIEVEMENTS.find(x=>x.id===id);
+  if(a) toast(`${a.emoji} trophy of shame unlocked: ${a.name}`);
+  renderAchievements();
+}
+function renderAchievements(){
+  $('achGrid').innerHTML=ACHIEVEMENTS.map(a=>`
+    <div class="ach ${data.achievements[a.id]?'unlocked':''}">
+      <div class="a-emoji">${a.emoji}</div>
+      <div><div class="a-name">${a.name}</div><div class="a-desc">${a.desc}</div></div>
+    </div>`).join('');
+}
+
+/* ---------- STATS ---------- */
+function tierFor(min){ let t=ROT_TIERS[0]; for(const x of ROT_TIERS) if(min>=x.min) t=x; return t; }
+function distanceLine(min){
+  const meters = Math.round(min*60*0.5); /* ~0.5 m of feed per second of committed thumb work */
+  const unitLabel = data.prefs.imperial ? 'ft' : 'm';
+  const unitValue = data.prefs.imperial ? Math.round(meters*3.28084) : meters;
+  if(meters<=0) return [`0 ${unitLabel} scrolled`,"that's basically nothing. rookie."];
+
+  const n = x => (x>=10 ? Math.round(x).toLocaleString() : x.toFixed(1)); /* nice count */
+
+  /* reference ladder — metersPerUnit, ascending. we pick the biggest rung you've cleared.
+     add/remove rungs freely, it's just data. counts read as plurals (always >=1 here). */
+  const REFS = [
+    { m:5.5,          line:v=>`${n(v)} giraffes of pure slop, stacked.` },
+    { m:12,           line:v=>`${n(v)} T. rexes laid nose to tail.` },
+    { m:30,           line:v=>`${n(v)} blue whales of content, end to end.` },
+    { m:93,           line:v=>`${n(v)} Statues of Liberty, torch to toe.` },
+    { m:330,          line:v=>`${n(v)} Eiffel Towers of content. vertically.` },
+    { m:828,          line:v=>`${n(v)} Burj Khalifas, and you kept scrolling.` },
+    { m:2737,         line:v=>`${n(v)} Golden Gate Bridges, span to span.` },
+    { m:8849,         line:v=>`${n(v)} Mount Everests, straight up. touch grass at altitude.` },
+    { m:42195,        line:v=>`${n(v)} marathons you scrolled instead of ran.` },
+    { m:100000,       line:v=>`past the edge of space — ${n(v)}× the Kármán line.` },
+    { m:408000,       line:v=>`${n(v)} trips up to the ISS. the astronauts are concerned.` },
+    { m:12742000,     line:v=>`${n(v)} whole Earths, pole to pole. cool. cool cool cool.` },
+    { m:384400000,    line:v=>`you scrolled to the Moon (${n(v)}×). NASA has questions.` },
+    { m:149600000000, line:v=>`${n(v)}× the distance to the Sun. please. we're begging.` },
+  ];
+
+  let ref = REFS[0];
+  for(const r of REFS) if(meters>=r.m) ref = r;
+  return [unitValue.toLocaleString()+' '+unitLabel+' scrolled', ref.line(meters/ref.m)];
+}
+function lifetimeMinutes(){ return Math.round(Object.values(data.daySeconds).reduce((a,b)=>a+b,0)/60); }
+function lifetimeSessions(){ return Object.values(data.daySessions).reduce((a,b)=>a+b,0); }
+
+function updateStatsSwitchUI(){
+  const view=data.prefs.statsView||'today';
+  document.querySelectorAll('#statsSwitch .stats-switch-btn').forEach(b=>{
+    const active=b.dataset.view===view;
+    b.classList.toggle('active',active);
+    b.setAttribute('aria-selected',active);
+  });
+}
+
+function renderStats(){
+  const view=data.prefs.statsView||'today';
+  const isLife=view==='lifetime';
+  const tk=todayKey();
+  const min = isLife ? lifetimeMinutes() : Math.round((data.daySeconds[tk]||0)/60);
+  const sess = isLife ? lifetimeSessions() : (data.daySessions[tk]||0);
+  $('stTime').textContent = min>=60 ? `${Math.floor(min/60)}h ${min%60}m` : `${min}m`;
+  $('stTimeLabel').textContent = isLife ? 'rotted lifetime' : 'rotted today';
+  $('stSessions').textContent=sess;
+  $('stSessionsLabel').textContent = isLife ? 'sessions lifetime' : 'sessions today';
+  $('stStreak').textContent=(isLife ? data.streak.best : data.streak.current)+'🔥';
+  $('stStreakLabel').textContent = isLife ? 'best rot streak' : 'day rot streak';
+  const tier=tierFor(min);
+  $('stTier').textContent=tier.emoji;
+  $('stTierName').textContent=tier.name.toLowerCase();
+  $('stRoast').textContent = min>0 ? rnd(ROASTS)(min) : 'your brain is still intact. suspicious.';
+  const dep=Math.min(100,Math.round(min/120*100));
+  $('depletionFill').style.width=dep+'%';
+  $('depletionPct').textContent=dep+'%';
+  const [d,c]=distanceLine(min);
+  $('stDistance').textContent=d; $('stDistanceCmp').textContent=c;
+}
+
+/* ---------- GUILT-O-METER (simulated social proof — clearly "alleged") ---------- */
+function guiltTick(){
+  const t=Date.now()/1000;
+  const n=Math.round(1240 + 180*Math.sin(t/47) + 60*Math.sin(t/9) + (Math.random()*24-12));
+  $('guiltCount').textContent=n.toLocaleString();
+}
+
+/* ---------- ROT REPORT (canvas-drawn share card, no html2canvas needed) ---------- */
+function wrapCanvasLines(ctx, text, maxWidth){
+  const words=text.split(' ');
+  const lines=[]; let line='';
+  for(const w of words){
+    const test = line ? line+' '+w : w;
+    if(line && ctx.measureText(test).width>maxWidth){ lines.push(line); line=w; }
+    else line=test;
+  }
+  if(line) lines.push(line);
+  return lines;
+}
+
+function drawReport(){
+  const cv=$('reportCanvas'), c=cv.getContext('2d'), W=cv.width, H=cv.height;
+  const tk=todayKey(), min=Math.round((data.daySeconds[tk]||0)/60);
+  const sess=data.daySessions[tk]||0, tier=tierFor(min);
+  const g=c.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'#0A0A12'); g.addColorStop(.55,'#1A0F2E'); g.addColorStop(1,'#0A0A12');
+  c.fillStyle=g; c.fillRect(0,0,W,H);
+  /* scanlines */
+  c.fillStyle='rgba(0,0,0,0.28)';
+  for(let y=0;y<H;y+=6) c.fillRect(0,y,W,2);
+  /* frame */
+  c.strokeStyle='#FF2D78'; c.lineWidth=10; c.strokeRect(30,30,W-60,H-60);
+  c.strokeStyle='#2DE2FF'; c.lineWidth=4; c.strokeRect(52,52,W-104,H-104);
+  const cx=W/2;
+  c.textAlign='center';
+  /* wordmark w/ chromatic offset */
+  c.font='900 92px Anton, Impact, sans-serif';
+  c.fillStyle='#FF2D78'; c.fillText('SCROLLMODORO',cx-5,170);
+  c.fillStyle='#2DE2FF'; c.fillText('SCROLLMODORO',cx+5,170);
+  c.fillStyle='#EDEBFF'; c.fillText('SCROLLMODORO',cx,170);
+  c.font='500 34px "JetBrains Mono", monospace';
+  c.fillStyle='#8B88A6'; c.fillText('— OFFICIAL ROT REPORT —',cx,230);
+  /* tier emoji + name */
+  c.font='200px serif'; c.fillText(tier.emoji,cx,480);
+  c.font='900 84px Anton, Impact, sans-serif';
+  c.fillStyle='#A6FF00'; c.fillText(tier.name.toUpperCase(),cx,600);
+  /* stats */
+  const rows=[
+    ['TIME ROTTED TODAY', min>=60?`${Math.floor(min/60)}H ${min%60}M`:`${min} MIN`],
+    ['SESSIONS', String(sess)],
+    ['ROT STREAK', data.streak.current+' DAYS'],
+    ['SCROLLED', distanceLine(min)[0].toUpperCase()],
+  ];
+  /* roast — measure+wrap first so multi-line roasts can borrow space from the
+     rows block above instead of overflowing into the footer */
+  c.font='italic 500 34px "Space Grotesk", sans-serif';
+  const roast = min>0 ? rnd(ROASTS)(min) : 'suspiciously little rot detected.';
+  const roastLineHeight=44;
+  const roastLines = wrapCanvasLines(c, '"'+roast+'"', W-240);
+
+  let y=720 - Math.max(0,roastLines.length-1)*roastLineHeight;
+  rows.forEach(([k,v])=>{
+    c.font='500 30px "JetBrains Mono", monospace'; c.fillStyle='#8B88A6';
+    c.textAlign='left'; c.fillText(k,120,y);
+    c.font='900 54px Anton, Impact, sans-serif'; c.fillStyle='#EDEBFF';
+    c.textAlign='right'; c.fillText(v,W-120,y+4);
+    c.strokeStyle='#2A2A3E'; c.lineWidth=2;
+    c.beginPath(); c.moveTo(120,y+28); c.lineTo(W-120,y+28); c.stroke();
+    y+=110; c.textAlign='center';
+  });
+  c.font='italic 500 34px "Space Grotesk", sans-serif'; c.fillStyle='#FF2D78';
+  roastLines.forEach((line,i)=>c.fillText(line,cx,y+40+i*roastLineHeight));
+  /* footer */
+  c.font='700 36px "JetBrains Mono", monospace'; c.fillStyle='#A6FF00';
+  c.fillText('scrollmodoro.com',cx,H-110);
+  c.font='400 26px "JetBrains Mono", monospace'; c.fillStyle='#8B88A6';
+  c.fillText('rot responsibly',cx,H-70);
+}
+
+async function shareReport(){
+  const cv=$('reportCanvas');
+  const caption="I used scrollmodoro today and I'm not even ashamed. scrollmodoro.com";
+  cv.toBlob(async blob=>{
+    const file=new File([blob],'rot-report.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file],text:caption}); return; }
+      catch(e){ if(e && e.name==='AbortError') return; }
+    }
+    try{
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob); a.download='rot-report.png'; a.click();
+      try{ await navigator.clipboard.writeText(caption); toast('report downloaded + caption copied 📋'); }
+      catch(e){ toast('rot report downloaded 📸'); }
+    }catch(e){ toast('sharing failed — try again?'); }
+  },'image/png');
+}
+
+/* ---------- DONE SCREEN ---------- */
+function showDone(brokeWell){
+  state.phase='done';
+  document.title='scrollmodoro — rot responsibly';
+  $('doneTitle').textContent = brokeWell ? 'certified grass toucher' : 'session complete';
+  $('doneSub').textContent = brokeWell
+    ? 'you rotted AND you coped. balance restored.'
+    : 'you may now return to productivity. or don\u2019t.';
+  drawReport();
+  renderStats();
+  $('doneScreen').classList.add('active');
+}
+function goHome(){
+  $('doneScreen').classList.remove('active');
+  document.body.style.overflow='';
+  state.phase='idle';
+  renderStats();
+}
+
+/* ---------- WIRING ---------- */
+document.querySelectorAll('.mode-card').forEach(btn=>{
+  btn.addEventListener('click',e=>{
+    const mode=btn.dataset.mode;
+    if(mode==='custom'){
+      $('customRow').classList.toggle('open');
+      return;
+    }
+    startRot(mode);
+  });
+});
+function customStart(){
+  const v=Math.max(1,Math.min(480,parseInt($('customMin').value)||45));
+  startRot('custom',v);
+}
+$('customGo').addEventListener('click',e=>{ e.stopPropagation(); customStart(); });
+$('customGo').addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); e.stopPropagation(); customStart(); }});
+$('customMin').addEventListener('click',e=>e.stopPropagation());
+$('customMin').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.stopPropagation(); customStart(); }});
+
+$('quitBtn').addEventListener('click',quitRot);
+$('skipCope').addEventListener('click',()=>{ toast('the grass will remember this.'); finishCope(false); });
+$('lofiBtn').addEventListener('click',()=>{
+  lofiOn=!lofiOn;
+  $('lofiBtn').textContent='lo-fi: '+(lofiOn?'on':'off');
+  lofiOn ? lofiStart() : lofiStop();
+});
+$('shareBtn').addEventListener('click',shareReport);
+$('againBtn').addEventListener('click',()=>{ $('doneScreen').classList.remove('active'); startRot(state.modeKey||'reels', MODES.custom.rotMin); });
+$('homeBtn').addEventListener('click',goHome);
+
+function openSettings(){
+  $('settingsOverlay').classList.add('open');
+  $('settingsBtn').setAttribute('aria-expanded','true');
+}
+function closeSettings(){
+  $('settingsOverlay').classList.remove('open');
+  $('settingsBtn').setAttribute('aria-expanded','false');
+}
+$('settingsBtn').addEventListener('click',openSettings);
+$('settingsClose').addEventListener('click',closeSettings);
+$('settingsOverlay').addEventListener('click',e=>{ if(e.target===$('settingsOverlay')) closeSettings(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeSettings(); });
+$('imperialToggle').addEventListener('change',async e=>{
+  data.prefs.imperial=e.target.checked;
+  renderStats();
+  await saveData();
+});
+$('workTimerToggle').addEventListener('change',e=>{
+  if(e.target.checked){
+    e.target.checked=false;
+    toast('not fooling anybody.');
+  }
+});
+
+function updateChips(){
+  $('notifChip').textContent='🔔 dark humor notifications: '+(data.prefs.notif?'on':'off');
+  $('notifChip').classList.toggle('on',data.prefs.notif);
+  $('soundChip').textContent='🔊 sound: '+(data.prefs.sound?'on':'off');
+  $('soundChip').classList.toggle('on',data.prefs.sound);
+}
+$('notifChip').addEventListener('click',async ()=>{
+  if(!data.prefs.notif){
+    if(!('Notification' in window)){ toast('notifications unavailable here.'); return; }
+    try{
+      const p=await Notification.requestPermission();
+      if(p!=='granted'){ toast('notifications blocked. your neurons rot in silence.'); return; }
+    }catch(e){ toast('notifications unavailable here.'); return; }
+    data.prefs.notif=true;
+  } else data.prefs.notif=false;
+  updateChips();
+  await saveData();
+});
+$('soundChip').addEventListener('click',async ()=>{
+  data.prefs.sound=!data.prefs.sound;
+  updateChips();
+  await saveData();
+});
+$('statsSwitch').addEventListener('click',async e=>{
+  const btn=e.target.closest('.stats-switch-btn');
+  if(!btn || btn.dataset.view===data.prefs.statsView) return;
+  data.prefs.statsView=btn.dataset.view;
+  updateStatsSwitchUI();
+  renderStats();
+  await saveData();
+});
+
+/* ---------- SHAREABLE MODE LINKS ----------
+   Deep-link straight into a session for "I tried Full Brainrot" content:
+     scrollmodoro.com?mode=brainrot
+     scrollmodoro.com?mode=tiktok
+     scrollmodoro.com?mode=custom&minutes=90
+     scrollmodoro.com?minutes=90        (minutes alone => custom)
+   Aliases are forgiving: ?mode=full-brainrot / FULLBRAINROT all resolve.
+   Invalid values are ignored and just show the normal homepage. */
+const MODE_ALIASES = {
+  tiktok:'tiktok', tik:'tiktok', tt:'tiktok',
+  reels:'reels', reel:'reels', ig:'reels',
+  brainrot:'brainrot', fullbrainrot:'brainrot', full:'brainrot', brain:'brainrot',
+  custom:'custom',
+};
+function initQueryMode(){
+  try{
+    const p = new URLSearchParams(location.search);
+    const rawMode = (p.get('mode')||'').toLowerCase().replace(/[^a-z]/g,'');
+    const mins = parseInt(p.get('minutes'),10);
+    const hasMins = !Number.isNaN(mins);
+    const clamp = n => Math.max(1, Math.min(480, n));
+    const key = MODE_ALIASES[rawMode];
+    if(key==='custom' || (!key && hasMins)){
+      startRot('custom', clamp(hasMins ? mins : MODES.custom.rotMin));
+    } else if(key && MODES[key]){
+      startRot(key);
+    }
+  }catch(e){/* bad params => normal homepage */}
+}
+
+/* ---------- BOOT ---------- */
+(async function boot(){
+  await loadData();
+  updateChips();
+  updateStatsSwitchUI();
+  $('imperialToggle').checked = !!data.prefs.imperial;
+  renderStats(); renderAchievements();
+  guiltTick(); setInterval(guiltTick,2800);
+  initQueryMode(); /* auto-start a session if the URL asks for one */
+})();
+</script>
+</body>
+</html>
